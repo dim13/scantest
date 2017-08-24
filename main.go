@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/shlex"
 	"github.com/mdwhatcott/spin"
-	"github.com/smartystreets/scantest/go-shlex"
 )
 
 func main() {

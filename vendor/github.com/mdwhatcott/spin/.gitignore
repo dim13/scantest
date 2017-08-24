@@ -1,0 +1,5 @@
+*.swp
+generated_by_gunit_test.go
+/.idea
+/vendor
+Gopkg.lock
