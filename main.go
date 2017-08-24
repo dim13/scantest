@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/shlex"
-	"github.com/mdwhatcott/spin"
 )
 
 func main() {
@@ -33,12 +32,12 @@ func main() {
 
 	scanner := &Scanner{working: working}
 	runner := &Runner{working: working, command: args}
-	for {
-		spin.GoStart()
+	ticker := time.NewTicker(time.Millisecond * 250)
+	defer ticker.Stop()
+	for range ticker.C {
 		if scanner.Scan() {
 			runner.Run()
 		}
-		spin.Stop()
 	}
 }
 
@@ -50,7 +49,6 @@ type Scanner struct {
 }
 
 func (s *Scanner) Scan() bool {
-	time.Sleep(time.Millisecond * 250)
 	newState := s.checksum()
 	defer func() { s.state = newState }()
 	return newState != s.state
@@ -91,9 +89,6 @@ func (r *Runner) Run() {
 	write(resetColor)
 }
 
-func writeln() {
-	write("\n")
-}
 func write(a ...interface{}) {
 	fmt.Fprint(os.Stdout, a...)
 	os.Stdout.Sync()
@@ -106,44 +101,13 @@ func (r *Runner) run() (output []byte, success bool) {
 	}
 	command.Dir = r.working
 
-	now := time.Now()
-	spin.GoStart()
+	defer func(t time.Time) { fmt.Println(time.Since(t)) }(time.Now())
 
-	var err error
-	output, err = command.CombinedOutput()
-	spin.Stop()
-	fmt.Println(Round(time.Since(now), time.Millisecond))
+	output, err := command.CombinedOutput()
 	if err != nil {
 		output = append(output, []byte(err.Error())...)
 	}
 	return output, command.ProcessState.Success()
-}
-
-// GoLang-Nuts thread:
-//     https://groups.google.com/d/msg/golang-nuts/OWHmTBu16nA/RQb4TvXUg1EJ
-// Wise, a word which here means unhelpful, guidance from Commander Pike:
-//     https://groups.google.com/d/msg/golang-nuts/OWHmTBu16nA/zoGNwDVKIqAJ
-// Answer satisfying the original asker:
-//     https://groups.google.com/d/msg/golang-nuts/OWHmTBu16nA/wnrz0tNXzngJ
-// Answer implementation on the Go Playground:
-//     http://play.golang.org/p/QHocTHl8iR
-func Round(duration, precision time.Duration) time.Duration {
-	if precision <= 0 {
-		return duration
-	}
-	negative := duration < 0
-	if negative {
-		duration = -duration
-	}
-	if m := duration % precision; m+m < precision {
-		duration = duration - m
-	} else {
-		duration = duration + precision - m
-	}
-	if negative {
-		return -duration
-	}
-	return duration
 }
 
 ////////////////////////////////////////////////////////////////////////////

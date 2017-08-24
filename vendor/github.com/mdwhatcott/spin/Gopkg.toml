@@ -1,7 +1,0 @@
-[[constraint]]
-  branch = "master"
-  name = "github.com/smartystreets/assertions"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/smartystreets/gunit"

@@ -7,15 +7,9 @@
   packages = ["."]
   revision = "6f45313302b9c56850fc17f99e40caebce98c716"
 
-[[projects]]
-  branch = "master"
-  name = "github.com/mdwhatcott/spin"
-  packages = ["."]
-  revision = "7083b4c1eb7f33e52aebafd7e1c9dd4df845658a"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a59f14b547ee8899c1451adb904495a6fd107fb1c19f69fc84efc4d0c0a66686"
+  inputs-digest = "68d23d01380c9a4c363a906a3b7b324bbeb600a4f3c816a82c3264aa5e08561b"
   solver-name = "gps-cdcl"
   solver-version = 1
