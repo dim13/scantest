@@ -49,16 +49,16 @@ type Scanner struct {
 	working string
 }
 
-func (this *Scanner) Scan() bool {
+func (s *Scanner) Scan() bool {
 	time.Sleep(time.Millisecond * 250)
-	newState := this.checksum()
-	defer func() { this.state = newState }()
-	return newState != this.state
+	newState := s.checksum()
+	defer func() { s.state = newState }()
+	return newState != s.state
 }
 
-func (this *Scanner) checksum() int64 {
+func (s *Scanner) checksum() int64 {
 	var sum int64 = 0
-	err := filepath.Walk(this.working, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(s.working, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			sum++
 		} else if strings.HasSuffix(info.Name(), ".go") {
@@ -79,9 +79,9 @@ type Runner struct {
 	working string
 }
 
-func (this *Runner) Run() {
+func (r *Runner) Run() {
 	write(clearScreen)
-	output, success := this.run()
+	output, success := r.run()
 	if success {
 		write(greenColor)
 	} else {
@@ -99,12 +99,12 @@ func write(a ...interface{}) {
 	os.Stdout.Sync()
 }
 
-func (this *Runner) run() (output []byte, success bool) {
-	command := exec.Command(this.command[0])
-	if len(this.command) > 1 {
-		command.Args = append(command.Args, this.command[1:]...)
+func (r *Runner) run() (output []byte, success bool) {
+	command := exec.Command(r.command[0])
+	if len(r.command) > 1 {
+		command.Args = append(command.Args, r.command[1:]...)
 	}
-	command.Dir = this.working
+	command.Dir = r.working
 
 	now := time.Now()
 	spin.GoStart()
