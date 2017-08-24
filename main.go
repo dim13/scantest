@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 )
 
 func main() {
-	command := flag.String("command", deriveDefaultCommand(), "The command (with arguments) to run when a .go file is saved.")
+	command := flag.String("command", "go test ./...", "The command (with arguments) to run when a .go file is saved.")
 	flag.Parse()
 
 	working, err := os.Getwd()
@@ -35,42 +34,12 @@ func main() {
 	scanner := &Scanner{working: working}
 	runner := &Runner{working: working, command: args}
 	for {
+		spin.GoStart()
 		if scanner.Scan() {
 			runner.Run()
 		}
+		spin.Stop()
 	}
-}
-
-// deriveDefaultCommand determines what to present as the default value of the
-// command flag, in case the user does not provide one. It first looks for a
-// Makefile in the current directory. If that doesn't exist it looks for the
-// Makefile provided by this project, which serves as a working generic example
-// that should fit a variety of use cases. If that doesn't exist for whatever
-// reason (say, if the scantest binary wasn't built from source on the current
-// machine) then it defaults to 'go test'.
-func deriveDefaultCommand() string {
-	var defaultCommand string
-
-	if current, err := os.Getwd(); err == nil {
-		if _, err := os.Stat(filepath.Join(current, "Makefile")); err == nil {
-			defaultCommand = "make"
-		}
-	}
-
-	if defaultCommand == "" {
-		if _, file, _, ok := runtime.Caller(0); ok {
-			backupMakefile := filepath.Join(filepath.Dir(file), "Makefile")
-			if _, err := os.Stat(backupMakefile); err == nil {
-				defaultCommand = backupMakefile
-			}
-		}
-	}
-
-	if defaultCommand == "" {
-		defaultCommand = "go test"
-	}
-
-	return defaultCommand
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -84,7 +53,6 @@ func (this *Scanner) Scan() bool {
 	time.Sleep(time.Millisecond * 250)
 	newState := this.checksum()
 	defer func() { this.state = newState }()
-	write(".")
 	return newState != this.state
 }
 
@@ -93,9 +61,7 @@ func (this *Scanner) checksum() int64 {
 	err := filepath.Walk(this.working, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			sum++
-		} else if info.Name() == "generated_by_gunit_test.go" {
-			return nil
-		} else if strings.HasSuffix(info.Name(), ".go") || info.Name() == "Makefile" {
+		} else if strings.HasSuffix(info.Name(), ".go") {
 			sum += info.Size() + info.ModTime().Unix()
 		}
 		return nil
@@ -114,15 +80,7 @@ type Runner struct {
 }
 
 func (this *Runner) Run() {
-	message := fmt.Sprintln(" Executing:", strings.Join(this.command, " "))
-
 	write(clearScreen)
-	writeln()
-	write(strings.Repeat("=", len(message)))
-	writeln()
-	write(message)
-	write(strings.Repeat("=", len(message)))
-	writeln()
 	output, success := this.run()
 	if success {
 		write(greenColor)
@@ -130,9 +88,6 @@ func (this *Runner) Run() {
 		write(redColor)
 	}
 	write(string(output))
-	writeln()
-	write(strings.Repeat("-", len(message)))
-	writeln()
 	write(resetColor)
 }
 
@@ -152,12 +107,11 @@ func (this *Runner) run() (output []byte, success bool) {
 	command.Dir = this.working
 
 	now := time.Now()
-	spinner := spin.New(spin.StyleLine, time.Millisecond*100)
-	go spinner.Start()
+	spin.GoStart()
 
 	var err error
 	output, err = command.CombinedOutput()
-	spinner.Stop()
+	spin.Stop()
 	fmt.Println(Round(time.Since(now), time.Millisecond))
 	if err != nil {
 		output = append(output, []byte(err.Error())...)
