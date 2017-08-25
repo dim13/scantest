@@ -78,20 +78,15 @@ type Runner struct {
 }
 
 func (r *Runner) Run() {
-	write(clearScreen)
+	fmt.Print(clearScreen)
 	output, success := r.run()
 	if success {
-		write(greenColor)
+		fmt.Print(greenColor)
 	} else {
-		write(redColor)
+		fmt.Print(redColor)
 	}
-	write(string(output))
-	write(resetColor)
-}
-
-func write(a ...interface{}) {
-	fmt.Fprint(os.Stdout, a...)
-	os.Stdout.Sync()
+	fmt.Print(string(output))
+	fmt.Print(resetColor)
 }
 
 func (r *Runner) run() (output []byte, success bool) {
