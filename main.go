@@ -96,7 +96,7 @@ func (r *Runner) run() (output []byte, success bool) {
 	}
 	command.Dir = r.working
 
-	defer func(t time.Time) { fmt.Println(time.Since(t)) }(time.Now())
+	defer func(t time.Time) { fmt.Println(time.Since(t), r.working) }(time.Now())
 
 	output, err := command.CombinedOutput()
 	if err != nil {
